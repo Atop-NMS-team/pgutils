@@ -54,9 +54,21 @@ func (c *Client) Update(data interface{}) error {
 
 type DBClient interface {
 	GetDB() (*pg.DB, error)
-
+	// Query
+	// results should be a slice, ex: []Author and db should have its shema
+	/* example:
+	var result = []devices{}
+	err = c.Query(&result, "state = ?", "running")
+	if err != nil {
+		t.Error(err)
+	}
+	*/
 	Query(results interface{}, field string, value interface{}) error
-	Insert(model interface{}) error
+	// Insert data's type should create schema first.
+	// example: err := client.Insert(MyStruct{Name:"austin"})
+	Insert(data interface{}) error
+	// Update data's type should create schema first.
+	// example: err := client.Update(MyStruct{Name:"austin"})
 	Update(update interface{}) error
 	// Close()
 }
@@ -64,16 +76,7 @@ type DBClient interface {
 // connectDB
 func connectDB(user, pass string) (*pg.DB, error) {
 	url := getDBHost(user, pass)
-	// opt, err := pg.ParseURL(url)
-	// if err != nil {
-	// 	log.Errorf("connect to database (%s) was failed err:%v", url, err)
-	// 	return nil, err
-	// }
-	// fmt.Println(opt)
-	// disable ssl mode
-	// TODO - should enable ssl
-	// opt.TLSConfig = nil
-	// pgdb := pg.Connect(opt)
+
 	pgdb := pg.Connect(&pg.Options{
 		Addr:     url,
 		User:     user,
