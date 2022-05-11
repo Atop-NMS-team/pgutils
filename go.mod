@@ -1,9 +1,8 @@
-module pgutils
+module github.com/Atop-NMS-team/pgutils
 
 go 1.18
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/go-pg/pg/v10 v10.10.6
 	github.com/sirupsen/logrus v1.8.1
 )

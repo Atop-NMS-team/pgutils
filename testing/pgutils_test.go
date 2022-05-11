@@ -1,9 +1,10 @@
 package testing_test
 
 import (
-	"pgutils"
 	"testing"
 	"time"
+
+	"github.com/Atop-NMS-team/pgutils"
 )
 
 func TestDB(t *testing.T) {
