@@ -25,6 +25,11 @@ type ICreateTable interface {
 	CreateTable(modle interface{}, opt ...CreateTableOpt) error
 }
 
+type QueryExpr struct {
+	Expr  string
+	Value interface{}
+}
+
 type IDataAccess interface {
 	// Query
 	// results should be a slice, ex: []Author and db should have its shema
@@ -35,7 +40,7 @@ type IDataAccess interface {
 		t.Error(err)
 	}
 	*/
-	Query(results interface{}, field string, value interface{}) error
+	Query(results interface{}, queries ...QueryExpr) error
 	// Insert data's type should create schema first.
 	// example: err := client.Insert(MyStruct{Name:"austin"})
 	Insert(data interface{}) error

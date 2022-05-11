@@ -7,11 +7,12 @@ import (
 	"github.com/go-pg/pg/v10/orm"
 )
 
+// DeviceSession -> device_sessions
 type DeviceSession struct {
-	ID              int64
-	SessionID       string
-	State           string
-	CreatedTime     string
+	ID              int64  //id
+	SessionID       string // session_id
+	State           string // state
+	CreatedTime     string // created_time
 	LastUpdatedTime string
 }
 
@@ -19,6 +20,7 @@ func (ds DeviceSession) String() string {
 	return fmt.Sprintf("DeviceSession<%d %s %s>", ds.ID, ds.SessionID, ds.State)
 }
 
+// DeviceResult -> device_results
 type DeviceResult struct {
 	ID          int64
 	SessionID   string

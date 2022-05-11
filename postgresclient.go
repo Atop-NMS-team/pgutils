@@ -28,9 +28,12 @@ func (c *PgClient) Insert(data interface{}) error {
 	return nil
 }
 
-func (c *PgClient) Query(results interface{}, field string, value interface{}) error {
-
-	err := c.db.Model(results).Where(field, value).Select()
+func (c *PgClient) Query(results interface{}, queries ...QueryExpr) error {
+	query := c.db.Model(results)
+	for _, q := range queries {
+		query.Where(q.Expr, q.Value)
+	}
+	err := query.Select()
 	if err != nil {
 		return err
 	}
