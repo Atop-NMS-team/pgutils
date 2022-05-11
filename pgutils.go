@@ -2,6 +2,7 @@ package pgutils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/go-pg/pg/v10"
@@ -10,50 +11,21 @@ import (
 
 var ctx = context.Background()
 
-type Client struct {
-	db *pg.DB
+var (
+	ErrNullDB       = errors.New("got null db")
+	ErrDBNotSupport = errors.New("database not support")
+)
+
+type CreateTableOpt struct {
+	IfNotExists bool
+	Temp        bool
 }
 
-func (c *Client) GetDB() (*pg.DB, error) {
-	if c.db != nil {
-		return c.db, nil
-	}
-	db, err := connectDB("user", "pass")
-	c.db = db
-	return c.db, err
-
+type ICreateTable interface {
+	CreateTable(modle interface{}, opt ...CreateTableOpt) error
 }
 
-func (c *Client) Insert(data interface{}) error {
-	result, err := c.db.Model(data).Insert()
-	if err != nil {
-		return err
-	}
-	fmt.Println(result)
-	return nil
-}
-
-func (c *Client) Query(results interface{}, field string, value interface{}) error {
-
-	err := c.db.Model(results).Where(field, value).Select()
-	if err != nil {
-		return err
-	}
-	fmt.Println(results)
-	return nil
-}
-
-func (c *Client) Update(data interface{}) error {
-
-	_, err := c.db.Model(data).WherePK().Update()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type DBClient interface {
-	GetDB() (*pg.DB, error)
+type IDataAccess interface {
 	// Query
 	// results should be a slice, ex: []Author and db should have its shema
 	/* example:
@@ -70,53 +42,52 @@ type DBClient interface {
 	// Update data's type should create schema first.
 	// example: err := client.Update(MyStruct{Name:"austin"})
 	Update(update interface{}) error
-	// Close()
 }
 
-// connectDB
-func connectDB(user, pass string) (*pg.DB, error) {
-	url := getDBHost(user, pass)
-
-	pgdb := pg.Connect(&pg.Options{
-		Addr:     url,
-		User:     user,
-		Password: pass,
-	})
-	initDB(pgdb)
-	// check databas is up
-	if err := pgdb.Ping(ctx); err != nil {
-		log.Errorf("database not up err:%v", err)
-		return nil, err
-	}
-	return pgdb, nil
+// IDBClient
+type IDBClient interface {
+	ICreateTable
+	IDataAccess
+	GetDB() (*pg.DB, error)
+	Close()
 }
 
-func initDB(db *pg.DB) {
-	if db == nil {
-		log.Errorf("got nil db ")
-		return
-	}
-	err := createDeviceSchema(db)
-	if err != nil {
-		log.Errorf("create schema fail err:%v", err)
-		// return
-	}
+type NewClientOpt struct {
+	Addr     string
+	User     string
+	Password string
+	Database string
+	Client   string
+}
+
+var defaultNewClientOpt = NewClientOpt{
+	User:     "user",
+	Password: "pass",
+	Database: "nms",
+	Client:   "postgres",
 }
 
 // NewClient new PostgreSQL client
-func NewClient() (DBClient, error) {
-	return NewClientWithAccount("user", "pass")
-}
+func NewClient(opt ...NewClientOpt) (IDBClient, error) {
+	var o NewClientOpt
+	if len(opt) >= 1 {
+		o = opt[0]
+	} else {
+		o = defaultNewClientOpt
+	}
+	switch o.Client {
+	case "postgres":
+		pgdb, err := connectPostgreDB(o)
+		if err != nil {
+			log.Error("connect postgres fail: ", err)
+			return nil, err
+		}
 
-// NewClientWithAccount new PostgreSQL client with account authentication
-func NewClientWithAccount(user, pass string) (DBClient, error) {
-	pgdb, err := connectDB(user, pass)
-	if err != nil {
-		return nil, err
+		return &PgClient{
+			db: pgdb,
+		}, nil
+	default:
+		return nil, fmt.Errorf("db: %s create client fail: %w", o.Client, ErrDBNotSupport)
 	}
 
-	initDB(pgdb)
-	return &Client{
-		db: pgdb,
-	}, nil
 }

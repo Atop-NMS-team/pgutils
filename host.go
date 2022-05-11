@@ -20,7 +20,7 @@ func isRunningInDockerContainer() bool {
 
 // getDBHost
 // TODO -- add config
-func getDBHost(user, pass string) string {
+func getDBHost() string {
 	if isRunningInDockerContainer() {
 		return "postgresql:5432"
 		//return fmt.Sprintf("postgres://%s:%s@postgresql:5432/nms", user, pass)
